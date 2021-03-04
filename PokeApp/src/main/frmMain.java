@@ -26,11 +26,12 @@ import org.codehaus.jackson.map.ObjectMapper;
  * @author Miguel Matul <https://github.com/MigueMat4>
  */
 public class frmMain extends javax.swing.JFrame {
-    
+
     Pokedex dexter; // objeto que hará uso de la conexión a la API
     Pokemon miPokemon; // objeto de la clase que hace match con los datos de la API
     Reloj reloj = new Reloj(); // objeto para la hora del sistema. ¡No modificar!
-    
+    HiloDeletrear x=new HiloDeletrear(0,"");
+
     /**
      * Creates new form frmMain
      */
@@ -38,18 +39,20 @@ public class frmMain extends javax.swing.JFrame {
         initComponents();
         reloj.start(); // objeto iniciado para la hora del sistema. ¡No modificar!
         btnDeletrear.setEnabled(false);
+        this.setLocationRelativeTo(null);
     }
-    
+
     // clase que conecta a la API y obtiene los datos del pokémon buscado
     public class Pokedex {
+
         private static final String POKEMON_API_URL = "https://pokeapi.co/api/v2/pokemon/";
         private final String nombrePokemon;
-    
-        public Pokedex(String pokemonABuscar){
+
+        public Pokedex(String pokemonABuscar) {
             nombrePokemon = pokemonABuscar;
         }
-        
-        public void buscarPokemon() throws IOException, InterruptedException{
+
+        public void buscarPokemon() throws IOException, InterruptedException {
             btnBuscar.setEnabled(false);
             txtNombre.setEnabled(false);
             System.out.println("Conectando a la API...");
@@ -58,7 +61,7 @@ public class frmMain extends javax.swing.JFrame {
             HttpRequest request = HttpRequest.newBuilder()
                     .GET()
                     .header("Accept", "application/json")
-                    .uri(URI.create(POKEMON_API_URL+nombrePokemon))
+                    .uri(URI.create(POKEMON_API_URL + nombrePokemon))
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("¡Conexión exitosa! Descargando datos...");
@@ -66,7 +69,7 @@ public class frmMain extends javax.swing.JFrame {
             // obtener los datos del pokémon en el objeto correspondiente
             miPokemon = mapper.readValue(response.body(), Pokemon.class);
             // colocar la información en los label correspondientes
-            lblID.setText("#"+miPokemon.getId());
+            lblID.setText("#" + miPokemon.getId());
             lblNombre.setText(miPokemon.getName());
             lblHeight.setText(String.valueOf(miPokemon.getHeight()) + " m");
             lblWeight.setText(String.valueOf(miPokemon.getWeight()) + " kg");
@@ -76,37 +79,37 @@ public class frmMain extends javax.swing.JFrame {
             btnDeletrear.setEnabled(true);
         }
     }
-    
+
     // clase que mostrará los 4 sprites del pokémon
     public class Viewer {
-        public void mostrarSprites() throws MalformedURLException, IOException, InterruptedException{
+
+        public void mostrarSprites() throws MalformedURLException, IOException, InterruptedException {
             // obtengo la url del listado de cada uno de los sprites que me dio la API
             URL url = new URL(miPokemon.getSprites().get("front_default").toString());
             Image img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
             // 1 segundo para cada cambio de sprite
             Thread.sleep(1000);
-            
+
             url = new URL(miPokemon.getSprites().get("back_default").toString());
             img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
             Thread.sleep(1000);
-            
+
             url = new URL(miPokemon.getSprites().get("front_shiny").toString());
             img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
             Thread.sleep(1000);
-            
+
             url = new URL(miPokemon.getSprites().get("back_shiny").toString());
             img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
             Thread.sleep(1000);
         }
     }
-    
+
     // clase para deletrear el nombre del pokemon
     //<Inserte su código aquí>
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -259,7 +262,19 @@ public class frmMain extends javax.swing.JFrame {
     }//GEN-LAST:event_formWindowOpened
 
     private void btnDeletrearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeletrearActionPerformed
-        //
+        if (lblNombre.getText() != "???") {
+
+            if (x.isAlive() == false) {
+                int cantidad = lblNombre.getText().length();
+                String name = lblNombre.getText();
+                x = new HiloDeletrear(cantidad, name);
+                x.start();
+
+            }
+
+        }
+
+
     }//GEN-LAST:event_btnDeletrearActionPerformed
 
     /**
@@ -295,27 +310,56 @@ public class frmMain extends javax.swing.JFrame {
         });
         System.out.println("LOGS:");
     }
-    
+
     // clase para la hora del sistema. ¡No modificar!
     public class Reloj extends Thread {
+
         Calendar calendario;
-        
+
         @Override
         public void run() {
             while (true) {
-                calendario= Calendar.getInstance();
-                if (calendario.get(Calendar.HOUR_OF_DAY)<10)
-                    lblHH.setText(String.valueOf("0"+calendario.get(Calendar.HOUR_OF_DAY)) + " :");
-                else
+                calendario = Calendar.getInstance();
+                if (calendario.get(Calendar.HOUR_OF_DAY) < 10) {
+                    lblHH.setText(String.valueOf("0" + calendario.get(Calendar.HOUR_OF_DAY)) + " :");
+                } else {
                     lblHH.setText(String.valueOf(calendario.get(Calendar.HOUR_OF_DAY)) + " :");
-                if (calendario.get(Calendar.MINUTE)<10)
-                    lblMM.setText(String.valueOf("0"+calendario.get(Calendar.MINUTE)) + " :");
-                else
+                }
+                if (calendario.get(Calendar.MINUTE) < 10) {
+                    lblMM.setText(String.valueOf("0" + calendario.get(Calendar.MINUTE)) + " :");
+                } else {
                     lblMM.setText(String.valueOf(calendario.get(Calendar.MINUTE)) + " :");
-                if (calendario.get(Calendar.SECOND)<10)
-                    lblSS.setText(String.valueOf("0"+calendario.get(Calendar.SECOND)) + " hrs");
-                else
+                }
+                if (calendario.get(Calendar.SECOND) < 10) {
+                    lblSS.setText(String.valueOf("0" + calendario.get(Calendar.SECOND)) + " hrs");
+                } else {
                     lblSS.setText(String.valueOf(calendario.get(Calendar.SECOND)) + " hrs");
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(frmMain.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    public class HiloDeletrear extends Thread {
+
+        int cont = 0;
+        int aux = 0;
+        String nombre = "";
+
+        public HiloDeletrear(int dato, String name) {
+            this.cont = dato;
+            this.nombre = name;
+        }
+
+        @Override
+        public void run() {
+            while ( aux < cont) {
+                lblLetra.setText(String.valueOf(nombre.charAt(aux)));
+                aux++;
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
