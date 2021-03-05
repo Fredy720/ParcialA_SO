@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import org.codehaus.jackson.map.ObjectMapper;
 
 /**
@@ -30,7 +31,8 @@ public class frmMain extends javax.swing.JFrame {
     Pokedex dexter; // objeto que hará uso de la conexión a la API
     Pokemon miPokemon; // objeto de la clase que hace match con los datos de la API
     Reloj reloj = new Reloj(); // objeto para la hora del sistema. ¡No modificar!
-    HiloDeletrear x=new HiloDeletrear(0,"");
+    HiloDeletrear x = new HiloDeletrear(0, ""); //Hilo utilizado para deletrear
+    Buscar buscar = new Buscar(); //Hilo utilizado para Buscar y mostrar imagen del pokemon
 
     /**
      * Creates new form frmMain
@@ -65,18 +67,24 @@ public class frmMain extends javax.swing.JFrame {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("¡Conexión exitosa! Descargando datos...");
-            ObjectMapper mapper = new ObjectMapper();
-            // obtener los datos del pokémon en el objeto correspondiente
-            miPokemon = mapper.readValue(response.body(), Pokemon.class);
-            // colocar la información en los label correspondientes
-            lblID.setText("#" + miPokemon.getId());
-            lblNombre.setText(miPokemon.getName());
-            lblHeight.setText(String.valueOf(miPokemon.getHeight()) + " m");
-            lblWeight.setText(String.valueOf(miPokemon.getWeight()) + " kg");
-            System.out.println("¡Datos del Pokémon descargados!");
+            try { //verifica si el encuentra al pokemon 
+                ObjectMapper mapper = new ObjectMapper();
+                miPokemon = mapper.readValue(response.body(), Pokemon.class);
+                // colocar la información en los label correspondientes
+                lblID.setText("#" + miPokemon.getId());
+                lblNombre.setText(miPokemon.getName());
+                lblHeight.setText(String.valueOf(miPokemon.getHeight()) + " m");
+                lblWeight.setText(String.valueOf(miPokemon.getWeight()) + " kg");
+                System.out.println("¡Datos del Pokémon descargados!");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "No se encontró al pokemon intente de nuevo", "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
             btnBuscar.setEnabled(true);
             txtNombre.setEnabled(true);
             btnDeletrear.setEnabled(true);
+            // obtener los datos del pokémon en el objeto correspondiente
+
         }
     }
 
@@ -88,22 +96,26 @@ public class frmMain extends javax.swing.JFrame {
             URL url = new URL(miPokemon.getSprites().get("front_default").toString());
             Image img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
+            repaint();
             // 1 segundo para cada cambio de sprite
             Thread.sleep(1000);
 
             url = new URL(miPokemon.getSprites().get("back_default").toString());
             img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
+            repaint();
             Thread.sleep(1000);
 
             url = new URL(miPokemon.getSprites().get("front_shiny").toString());
             img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
+            repaint();
             Thread.sleep(1000);
 
             url = new URL(miPokemon.getSprites().get("back_shiny").toString());
             img = ImageIO.read(url);
             lblSprites.setIcon(new ImageIcon(img));
+            repaint();
             Thread.sleep(1000);
         }
     }
@@ -248,13 +260,8 @@ public class frmMain extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
-        dexter = new Pokedex(txtNombre.getText());
-        try {
-            dexter.buscarPokemon();
-        } catch (IOException | InterruptedException ex) {
-            Logger.getLogger(frmMain.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        lblSprites.setText("");
+        buscar = new Buscar();
+        buscar.start();
     }//GEN-LAST:event_btnBuscarActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
@@ -263,7 +270,6 @@ public class frmMain extends javax.swing.JFrame {
 
     private void btnDeletrearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeletrearActionPerformed
         if (lblNombre.getText() != "???") {
-
             if (x.isAlive() == false) {
                 int cantidad = lblNombre.getText().length();
                 String name = lblNombre.getText();
@@ -346,26 +352,46 @@ public class frmMain extends javax.swing.JFrame {
 
     public class HiloDeletrear extends Thread {
 
-        int cont = 0;
-        int aux = 0;
-        String nombre = "";
+        int cont = 0; //entero que recibe la longitud del string del nombre del pokemon 
+        int aux = 0; //contador que se va a ir moviendo para deletrear.
+        String nombre = ""; //se guarda el nombre del pokemon
 
         public HiloDeletrear(int dato, String name) {
-            this.cont = dato;
-            this.nombre = name;
+            this.cont = dato; // se recibe la longitud del nombre del pokemon
+            this.nombre = name; // se recibe el nonbre del pokemon 
         }
 
         @Override
         public void run() {
-            while ( aux < cont) {
-                lblLetra.setText(String.valueOf(nombre.charAt(aux)));
-                aux++;
+            while (aux < cont) {
+                lblLetra.setText(String.valueOf(nombre.charAt(aux))); //va cambiando de letra segun la posicion
+                aux++; //va avanzando en el string. 
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(frmMain.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+        }
+    }
+
+    public class Buscar extends Thread {
+
+        boolean seguir = false;
+        Viewer ver = new Viewer();
+
+        @Override
+        public void run() {
+            dexter = new Pokedex(txtNombre.getText());
+            try {
+                dexter.buscarPokemon();
+                seguir = true;
+                while (seguir) { //ciclo que sigue mostrando la imagen del pokedex
+                    ver.mostrarSprites();
+                }
+            } catch (IOException | InterruptedException ex) {
+            }
+            lblSprites.setText("");
         }
     }
 
